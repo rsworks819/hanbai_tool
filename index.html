@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="RS出品文">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#121212">
+<title>RS Works 出品文ジェネレーター</title>
+<style>
+  :root{
+    --bg:#121212;
+    --panel:#1a1a1a;
+    --panel2:#202020;
+    --line:#333;
+    --amber:#e8b93f;
+    --amber-dim:#5c4a18;
+    --text:#eee;
+    --sub:#999;
+    --danger:#c65c4a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
+    padding-bottom:60px;
+  }
+  header{
+    padding:22px 18px 16px;
+    border-bottom:2px solid var(--amber);
+    background:linear-gradient(180deg,#181818,#121212);
+  }
+  header .eyebrow{
+    font-size:11px;
+    letter-spacing:.15em;
+    color:var(--amber);
+    font-weight:700;
+    text-transform:uppercase;
+    font-family:"Courier New",monospace;
+  }
+  header h1{
+    margin:4px 0 2px;
+    font-size:22px;
+    letter-spacing:.02em;
+  }
+  header p{
+    margin:0;
+    font-size:12.5px;
+    color:var(--sub);
+  }
+  main{
+    max-width:640px;
+    margin:0 auto;
+    padding:16px;
+  }
+  .section{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .section h2{
+    font-size:13px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin:0 0 12px;
+    font-family:"Courier New",monospace;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .section h2::before{
+    content:"";
+    width:6px;height:6px;
+    background:var(--amber);
+    display:inline-block;
+  }
+  .row{
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .row > div{flex:1;}
+  label{
+    display:block;
+    font-size:12px;
+    color:var(--sub);
+    margin-bottom:5px;
+  }
+  input[type=text], input[type=number], textarea, select{
+    width:100%;
+    background:var(--panel2);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:10px 11px;
+    border-radius:7px;
+    font-size:15px;
+    font-family:inherit;
+  }
+  input:focus, textarea:focus, select:focus{
+    outline:none;
+    border-color:var(--amber);
+  }
+  textarea{
+    resize:vertical;
+    min-height:64px;
+    line-height:1.5;
+  }
+  .field{margin-bottom:10px;}
+  .status-toggle{
+    display:flex;
+    gap:8px;
+  }
+  .status-toggle button{
+    flex:1;
+    padding:12px;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:var(--panel2);
+    color:var(--sub);
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .status-toggle button.active{
+    border-color:var(--amber);
+    color:var(--amber);
+    background:#2a2313;
+  }
+  .hint{
+    font-size:11px;
+    color:var(--sub);
+    margin-top:4px;
+  }
+  .generate-bar{
+    position:sticky;
+    bottom:0;
+    background:var(--bg);
+    padding:12px 16px 16px;
+    border-top:1px solid var(--line);
+    max-width:640px;
+    margin:0 auto;
+  }
+  #generateBtn{
+    width:100%;
+    padding:15px;
+    border-radius:8px;
+    border:none;
+    background:var(--amber);
+    color:#1a1500;
+    font-size:16px;
+    font-weight:800;
+    letter-spacing:.03em;
+    cursor:pointer;
+  }
+  #generateBtn:active{opacity:.85;}
+  .outputs{margin-top:18px;}
+  .output-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    margin-bottom:14px;
+    overflow:hidden;
+  }
+  .output-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 14px;
+    background:var(--panel2);
+    border-bottom:1px solid var(--line);
+  }
+  .output-head span{
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--amber);
+    letter-spacing:.05em;
+  }
+  .copy-btn{
+    background:transparent;
+    border:1px solid var(--amber);
+    color:var(--amber);
+    padding:6px 12px;
+    border-radius:6px;
+    font-size:12.5px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .copy-btn.copied{
+    background:var(--amber);
+    color:#1a1500;
+  }
+  .output-body{
+    padding:14px;
+    white-space:pre-wrap;
+    font-size:13.5px;
+    line-height:1.7;
+    color:#ddd;
+    max-height:340px;
+    overflow-y:auto;
+  }
+  .empty-state{
+    text-align:center;
+    color:var(--sub);
+    font-size:13px;
+    padding:30px 10px;
+    border:1px dashed var(--line);
+    border-radius:10px;
+  }
+  .group-heading{
+    font-size:13px;
+    font-weight:800;
+    color:var(--amber);
+    margin:18px 0 10px;
+    padding-bottom:6px;
+    border-bottom:1px solid var(--line);
+  }
+  .group-heading:first-child{margin-top:0;}
+  .two-col{display:flex; gap:10px;}
+  .two-col > div{flex:1;}
+  details.section{padding:0;}
+  details.section summary{
+    padding:16px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:700;
+    color:var(--amber);
+    letter-spacing:.02em;
+    list-style:none;
+  }
+  details.section summary::-webkit-details-marker{display:none;}
+  details.section summary::before{
+    content:"▸ ";
+  }
+  details.section[open] summary::before{
+    content:"▾ ";
+  }
+  details.section[open] summary{
+    border-bottom:1px solid var(--line);
+    margin-bottom:0;
+  }
+  details.section > *:not(summary){
+    padding-left:16px;
+    padding-right:16px;
+  }
+  details.section > *:last-child{padding-bottom:16px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">RS WORKS / LISTING TOOL</div>
+  <h1>出品文ジェネレーター</h1>
+  <p>車両情報を入れるとインスタ・TikTok・ヤフオク・ジモティー用の文章をまとめて作成します</p>
+</header>
+
+<main>
+
+  <div class="section">
+    <h2>基本情報</h2>
+    <div class="row">
+      <div>
+        <label>メーカー</label>
+        <input type="text" id="maker" placeholder="例：ヤマハ">
+      </div>
+      <div>
+        <label>車種名</label>
+        <input type="text" id="model" placeholder="例：ジール250 3XV">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>価格（円）</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="price" placeholder="98000">
+      </div>
+      <div>
+        <label>走行距離（km）</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="mileage" placeholder="52828">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>排気量（cc）</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="displacement" placeholder="例：125">
+      </div>
+      <div>
+        <label>キー（例：1本／メインキー1本 タンクキー1本）</label>
+        <input type="text" id="keys" value="1本" placeholder="1本">
+      </div>
+    </div>
+    <div class="field">
+      <label>動画URL（任意）</label>
+      <input type="text" id="video" placeholder="https://youtu.be/...">
+    </div>
+    <div class="field">
+      <label>題名の追記・キャッチコピー（任意）</label>
+      <input type="text" id="titleTail" placeholder="例：通勤・通学・ウーバー等に！">
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>状態</h2>
+    <div class="status-toggle">
+      <button type="button" id="btnRunning" class="active">実働</button>
+      <button type="button" id="btnDead">不動</button>
+    </div>
+    <div class="status-toggle" id="runningPhraseToggle" style="margin-top:8px;">
+      <button type="button" id="phraseJitsudo" class="active">実働！</button>
+      <button type="button" id="phraseStartConfirmed">エンジン始動確認済み！</button>
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <label>動作確認・状態の説明</label>
+      <textarea id="statusText"></textarea>
+      <div class="hint">実働／不動を切り替えると例文が入ります。自由に書き換えてください。</div>
+    </div>
+    <div class="field">
+      <label>不具合・特記事項（任意）</label>
+      <textarea id="issues" placeholder="例：Fブレーキパッド残量少なく、ディスクと擦れている音が出ております。"></textarea>
+    </div>
+    <div class="field" id="partsOutFieldWrap" style="display:none;">
+      <label style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="partsOutNote" checked style="width:auto;">
+        「修理ベース、部品取りにご使用下さい」を追加
+      </label>
+    </div>
+  </div>
+
+  <details class="section" id="advancedSection">
+    <summary>詳細設定（整備費用・検索ワード・エリアなど）</summary>
+    <div class="field" style="margin-top:14px;">
+      <label>エリア</label>
+      <input type="text" id="area" value="東京都八王子市">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>エンジンオイル交換（円）</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="oilPrice" placeholder="例：2000">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>フロントタイヤ交換（円）</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="frontTire" value="8000" placeholder="例：8000">
+      </div>
+      <div class="field">
+        <label>リアタイヤ交換（円）</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="rearTire" value="10000" placeholder="例：10000">
+      </div>
+    </div>
+    <div class="hint" style="margin-bottom:12px;">金額を入れた項目だけ文章に反映されます。空欄はスキップされます。</div>
+    <div class="field">
+      <label>検）検索ワード（ヤフオク・ジモティー用）</label>
+      <input type="text" id="searchWords" placeholder="例：シグナスX PCX125 リード125">
+    </div>
+    <div class="field">
+      <label>ハッシュタグ（インスタ・TikTok用）</label>
+      <input type="text" id="hashtags" value="#rsworks#中古バイク販売#中古バイク">
+    </div>
+  </details>
+
+</main>
+
+<div class="generate-bar">
+  <button id="generateBtn">文章を作成する</button>
+</div>
+
+<main>
+  <div class="outputs" id="outputs">
+    <div class="empty-state">項目を入力して「文章を作成する」を押してください</div>
+  </div>
+</main>
+
+<script>
+let isRunning = true;
+let runningPhrase = '実働';
+
+const runningDefault = "走る、曲がる、止まる問題ございません。\n平地80km以上出ること確認いたしました。";
+const deadDefault = "ジャンプにてエンジン始動確認いたしました。\n現状バッテリー上がっております。";
+
+const statusText = document.getElementById('statusText');
+statusText.value = runningDefault;
+
+const btnRunning = document.getElementById('btnRunning');
+const btnDead = document.getElementById('btnDead');
+const partsOutFieldWrap = document.getElementById('partsOutFieldWrap');
+const runningPhraseToggle = document.getElementById('runningPhraseToggle');
+const phraseJitsudo = document.getElementById('phraseJitsudo');
+const phraseStartConfirmed = document.getElementById('phraseStartConfirmed');
+
+phraseJitsudo.addEventListener('click', () => {
+  runningPhrase = '実働';
+  phraseJitsudo.classList.add('active');
+  phraseStartConfirmed.classList.remove('active');
+});
+phraseStartConfirmed.addEventListener('click', () => {
+  runningPhrase = 'エンジン始動確認済み';
+  phraseStartConfirmed.classList.add('active');
+  phraseJitsudo.classList.remove('active');
+});
+
+const displacementInput = document.getElementById('displacement');
+const oilPriceInput = document.getElementById('oilPrice');
+displacementInput.addEventListener('input', () => {
+  const cc = Number(displacementInput.value);
+  if(cc >= 50 && cc <= 125){
+    oilPriceInput.value = 3000;
+  }
+});
+
+btnRunning.addEventListener('click', () => {
+  isRunning = true;
+  btnRunning.classList.add('active');
+  btnDead.classList.remove('active');
+  if(statusText.value.trim() === '' || statusText.value === deadDefault){
+    statusText.value = runningDefault;
+  }
+  partsOutFieldWrap.style.display = 'none';
+  runningPhraseToggle.style.display = 'flex';
+});
+
+btnDead.addEventListener('click', () => {
+  isRunning = false;
+  btnDead.classList.add('active');
+  btnRunning.classList.remove('active');
+  if(statusText.value.trim() === '' || statusText.value === runningDefault){
+    statusText.value = deadDefault;
+  }
+  partsOutFieldWrap.style.display = 'block';
+  runningPhraseToggle.style.display = 'none';
+});
+
+function val(id){
+  return document.getElementById(id).value.trim();
+}
+
+function numOrNull(id){
+  const v = document.getElementById(id).value;
+  return v === '' ? null : Number(v).toLocaleString('ja-JP');
+}
+
+function yen(n){
+  return Number(n).toLocaleString('ja-JP');
+}
+
+function buildMaintenanceLine(){
+  const oil = numOrNull('oilPrice');
+  const front = numOrNull('frontTire');
+  const rear = numOrNull('rearTire');
+  const parts = [];
+  if(oil) parts.push(`エンジンオイル交換　別途${oil}円`);
+  if(front) parts.push(`フロントタイヤ交換 別途　${front}円`);
+  if(rear) parts.push(`リアタイヤ交換　別途${rear}円`);
+  if(parts.length === 0) return null;
+  return parts.join('、') + 'にてご対応可能でございます。';
+}
+
+function buildBody(platform){
+  const maker = val('maker');
+  const model = val('model');
+  const price = val('price');
+  const mileage = val('mileage');
+  const keys = val('keys') || '1本';
+  const video = val('video');
+  const area = val('area') || '東京都八王子市';
+  const statusDesc = statusText.value.trim();
+  const issues = val('issues');
+  const searchWords = val('searchWords');
+  const hashtags = val('hashtags');
+  const maintenanceLine = buildMaintenanceLine();
+  const partsOutChecked = document.getElementById('partsOutNote').checked;
+
+  let lines = [];
+  lines.push('ご覧いただきありがとうございます。');
+  lines.push(`${maker}　${model}の出品です。`);
+  lines.push('');
+
+  if(video && platform !== 'sns'){
+    lines.push(`詳細動画　${video}`);
+    lines.push('');
+  }
+
+  lines.push(`キー　${keys}`);
+  if(mileage) lines.push(`走行距離　${mileage}km（メーター読み）`);
+  lines.push('');
+
+  if(statusDesc){
+    lines.push(statusDesc);
+    lines.push('');
+  }
+
+  if(issues){
+    lines.push(issues);
+    lines.push('');
+  }
+
+  if(!isRunning && partsOutChecked){
+    lines.push('この様な状態ですので修理ベース、部品取りにご使用下さい。');
+    lines.push('');
+  }
+
+  lines.push('傷、汚れ、状態、欠品等写真、動画で判断お願いいたします。');
+  lines.push('記載出来ていない不具合等あるかもしれません。');
+  lines.push('完全現状販売でお願いいたします。');
+  lines.push('');
+
+  lines.push(`${area}からの出品となります。`);
+  lines.push('トラック等でのお引き取りでお願いいたします。');
+
+  if(isRunning){
+    if(platform === 'yahoo'){
+      lines.push('自走でのお引き取りご希望の場合登録書類を発送いたしますので発送方法はレターパックライトをご選択下さい。');
+    } else if(platform === 'jimoty' || platform === 'sns'){
+      lines.push('自走でのお引き取りご希望の場合要相談でお願いいたします。');
+    }
+  }
+  lines.push('八王子近辺でしたら別途格安で配送可能でございます！');
+  lines.push('お気軽にお問い合わせ下さい！');
+  lines.push('');
+
+  lines.push('お引き渡し後の事故、故障等完全自己責任になります。ご理解お願いいたします。');
+  if(isRunning){
+    lines.push('当方販売する車両全て完全現状販売（ノンリターン・ノンクレーム）となります。入庫してオイル等の消耗品交換をしていない完全現状車になりますのでご理解お願い致します。');
+    if(maintenanceLine){
+      lines.push(maintenanceLine);
+      lines.push('お気軽にお申し付けくださいませ。');
+    }
+  } else {
+    lines.push('当方販売する車両全て完全現状販売（ノンリターン・ノンクレーム）となります。入庫して消耗品交換等していない完全現状車になりますのでご理解お願い致します。');
+    lines.push('お気軽にお申し付けくださいませ。');
+  }
+  lines.push('');
+
+  lines.push('原則として、ご成約から14日以内のお引き取りをお願いいたします。');
+  lines.push('ご事情がある場合は、事前にご相談いただければ柔軟に対応させていただきますので、お気軽にご連絡ください。');
+  lines.push('');
+
+  lines.push('ご成約後のキャンセルにつきましては、いかなる場合でもキャンセル料として3万円を申し受けます。');
+  lines.push('何卒ご理解のほどよろしくお願い申し上げます。');
+  lines.push('');
+
+  lines.push('未成年者のご購入は親権者様または法定代理人のサインを頂いた同意書をお引き取り時にご持参お願い致します。');
+  lines.push('ご連絡頂きましたらテンプレートをPDFでお送り致しますのて印刷してご使用下さい。');
+  lines.push('');
+
+  lines.push('現車確認大歓迎です！');
+  lines.push('ご不明点、ご質問等お気軽にお問い合わせください！');
+
+  if(platform === 'sns'){
+    const model = val('model');
+    const modelTag = model ? `#${model.replace(/\s+/g,'')}` : '';
+    const fullHashtags = `${hashtags}${modelTag}`;
+    if(fullHashtags){
+      lines.push('');
+      lines.push(fullHashtags);
+    }
+  } else {
+    if(searchWords){
+      lines.push('');
+      lines.push(`検) ${searchWords}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+function baseTitle(){
+  const model = val('model');
+  const tail = val('titleTail');
+
+  if(isRunning){
+    let t = `${runningPhrase}！${model}`;
+    if(tail) t += ` ${tail}`;
+    return t;
+  } else {
+    let t = model;
+    if(tail) t += ` ${tail}`;
+    t += ' ベース・部品取りに';
+    return t;
+  }
+}
+
+function buildTitleFor(platform){
+  const video = val('video');
+  const price = val('price');
+  const base = baseTitle();
+
+  if(platform === 'tiktok'){
+    return base;
+  }
+  if(platform === 'instagram'){
+    let t = base;
+    if(price) t += ` ${yen(price)}円`;
+    return t;
+  }
+  if(platform === 'jimoty'){
+    const videoTag = video ? '【動画あり】' : '';
+    return `${videoTag}${base}`;
+  }
+  if(platform === 'yahoo'){
+    const videoTag = video ? '【動画あり！】' : '';
+    return `${videoTag}八王子市から！${base}`;
+  }
+  return base;
+}
+
+function buildSnsHeader(){
+  const price = val('price');
+  const statusWord = isRunning ? '実働' : '不動・部品取り';
+  const model = val('model');
+  let t = `${statusWord}！${model}`;
+  if(price) t += ` ${yen(price)}円`;
+  return t + '\n\n';
+}
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const snsBody = buildBody('sns');
+  const yahooBody = buildBody('yahoo');
+  const jimotyBody = buildBody('jimoty');
+
+  const outputs = document.getElementById('outputs');
+  outputs.innerHTML = '';
+
+  const instagramCombined = buildTitleFor('instagram') + '\n\n' + snsBody;
+
+  const cards = [
+    {label:'インスタ（題名＋本文）', text: instagramCombined},
+    {label:'題名｜TikTok', text: buildTitleFor('tiktok')},
+    {label:'本文｜TikTok', text: snsBody},
+    {label:'題名｜ジモティー', text: buildTitleFor('jimoty')},
+    {label:'本文｜ジモティー', text: jimotyBody},
+    {label:'題名｜ヤフオク', text: buildTitleFor('yahoo')},
+    {label:'本文｜ヤフオク', text: yahooBody},
+  ];
+
+  cards.forEach((c, idx) => {
+    const card = document.createElement('div');
+    card.className = 'output-card';
+    card.innerHTML = `
+      <div class="output-head">
+        <span>${c.label}</span>
+        <button class="copy-btn" data-idx="${idx}">コピー</button>
+      </div>
+      <div class="output-body" id="body-${idx}"></div>
+    `;
+    outputs.appendChild(card);
+    document.getElementById(`body-${idx}`).textContent = c.text;
+  });
+
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const idx = btn.getAttribute('data-idx');
+      const text = cards[idx].text;
+      try{
+        await navigator.clipboard.writeText(text);
+      }catch(e){
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      btn.textContent = 'コピー済み';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'コピー';
+        btn.classList.remove('copied');
+      }, 1500);
+    });
+  });
+
+  outputs.scrollIntoView({behavior:'smooth', block:'start'});
+});
+</script>
+
+</body>
+</html>
