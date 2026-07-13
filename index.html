@@ -271,8 +271,12 @@
       </div>
       <div>
         <label>車種名</label>
-        <input type="text" id="model" placeholder="例：ジール250 3XV">
+        <input type="text" id="model" placeholder="例：ジール250">
       </div>
+    </div>
+    <div class="field">
+      <label>型式（任意）</label>
+      <input type="text" id="modelCode" placeholder="例：3XV">
     </div>
     <div class="row">
       <div>
@@ -463,6 +467,7 @@ function buildMaintenanceLine(){
 function buildBody(platform){
   const maker = val('maker');
   const model = val('model');
+  const modelCode = val('modelCode');
   const price = val('price');
   const mileage = val('mileage');
   const keys = val('keys') || '1本';
@@ -477,7 +482,7 @@ function buildBody(platform){
 
   let lines = [];
   lines.push('ご覧いただきありがとうございます。');
-  lines.push(`${maker}　${model}の出品です。`);
+  lines.push(`${maker}　${model}${modelCode ? '　'+modelCode : ''}の出品です。`);
   lines.push('');
 
   if(video && platform !== 'sns'){
@@ -570,15 +575,20 @@ function buildBody(platform){
 }
 
 function baseTitle(){
+  const maker = val('maker');
   const model = val('model');
+  const modelCode = val('modelCode');
   const tail = val('titleTail');
 
+  let nameBlock = maker ? `${maker}　${model}` : model;
+  if(modelCode) nameBlock += `　${modelCode}`;
+
   if(isRunning){
-    let t = `${runningPhrase}！${model}`;
+    let t = `${runningPhrase}！${nameBlock}`;
     if(tail) t += ` ${tail}`;
     return t;
   } else {
-    let t = model;
+    let t = nameBlock;
     if(tail) t += ` ${tail}`;
     t += ' ベース・部品取りに';
     return t;
