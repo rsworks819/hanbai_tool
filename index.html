@@ -197,13 +197,23 @@
     color:#1a1500;
   }
   .output-body{
+    display:block;
+    width:100%;
     padding:14px;
     white-space:pre-wrap;
     font-size:13.5px;
     line-height:1.7;
     color:#ddd;
-    max-height:340px;
+    max-height:480px;
     overflow-y:auto;
+    background:transparent;
+    border:none;
+    font-family:inherit;
+    resize:none;
+  }
+  .output-body:focus{
+    outline:none;
+    background:#232323;
   }
   .empty-state{
     text-align:center;
@@ -303,6 +313,16 @@
       <input type="text" id="video" placeholder="https://youtu.be/...">
     </div>
     <div class="field">
+      <label>自賠責保険 満了日（任意・残っている場合のみ）</label>
+      <input type="date" id="jibaisekiDate">
+      <div class="hint">入れると題名と本文に自動で反映されます。</div>
+    </div>
+    <div class="field">
+      <label>追加タグ（任意、例：カスタム多数！）</label>
+      <input type="text" id="customTag" placeholder="例：カスタム多数！">
+      <div class="hint">「！」まで含めて入力してください。題名に自動で挿入されます。</div>
+    </div>
+    <div class="field">
       <label>題名の追記・キャッチコピー（任意）</label>
       <input type="text" id="titleTail" placeholder="例：通勤・通学・ウーバー等に！">
     </div>
@@ -317,6 +337,14 @@
     <div class="status-toggle" id="runningPhraseToggle" style="margin-top:8px;">
       <button type="button" id="phraseJitsudo" class="active">実働！</button>
       <button type="button" id="phraseStartConfirmed">エンジン始動確認済み！</button>
+    </div>
+    <div class="field" id="selfPickupFieldWrap" style="display:none; margin-top:10px;">
+      <label>自走でのお引き取り</label>
+      <div class="status-toggle">
+        <button type="button" id="selfPickupYes" class="active">あり</button>
+        <button type="button" id="selfPickupNo">なし</button>
+      </div>
+      <div class="hint">「なし」の場合、自走引き取りに関する文章は入りません。</div>
     </div>
     <div class="field" style="margin-top:12px;">
       <label>動作確認・状態の説明</label>
@@ -350,11 +378,11 @@
     <div class="row">
       <div class="field">
         <label>フロントタイヤ交換（円）</label>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" id="frontTire" value="8000" placeholder="例：8000">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="frontTire" placeholder="例：8800">
       </div>
       <div class="field">
         <label>リアタイヤ交換（円）</label>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" id="rearTire" value="10000" placeholder="例：10000">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="rearTire" placeholder="例：11000">
       </div>
     </div>
     <div class="hint" style="margin-bottom:12px;">金額を入れた項目だけ文章に反映されます。空欄はスキップされます。</div>
@@ -384,7 +412,7 @@
 let isRunning = true;
 let runningPhrase = '実働';
 
-const runningDefault = "走る、曲がる、止まる問題ございません。\n平地80km以上出ること確認いたしました。";
+const runningDefault = "走る、曲がる、止まる問題ございません。\n平地にて80km以上出ること確認いたしました。";
 const deadDefault = "ジャンプにてエンジン始動確認いたしました。\n現状バッテリー上がっております。";
 
 const statusText = document.getElementById('statusText');
@@ -396,24 +424,45 @@ const partsOutFieldWrap = document.getElementById('partsOutFieldWrap');
 const runningPhraseToggle = document.getElementById('runningPhraseToggle');
 const phraseJitsudo = document.getElementById('phraseJitsudo');
 const phraseStartConfirmed = document.getElementById('phraseStartConfirmed');
+const selfPickupFieldWrap = document.getElementById('selfPickupFieldWrap');
+const selfPickupYes = document.getElementById('selfPickupYes');
+const selfPickupNo = document.getElementById('selfPickupNo');
+let selfPickupAllowed = true;
+
+selfPickupYes.addEventListener('click', () => {
+  selfPickupAllowed = true;
+  selfPickupYes.classList.add('active');
+  selfPickupNo.classList.remove('active');
+});
+selfPickupNo.addEventListener('click', () => {
+  selfPickupAllowed = false;
+  selfPickupNo.classList.add('active');
+  selfPickupYes.classList.remove('active');
+});
 
 phraseJitsudo.addEventListener('click', () => {
   runningPhrase = '実働';
   phraseJitsudo.classList.add('active');
   phraseStartConfirmed.classList.remove('active');
+  selfPickupFieldWrap.style.display = 'none';
 });
 phraseStartConfirmed.addEventListener('click', () => {
   runningPhrase = 'エンジン始動確認済み';
   phraseStartConfirmed.classList.add('active');
   phraseJitsudo.classList.remove('active');
+  selfPickupFieldWrap.style.display = 'block';
 });
 
 const displacementInput = document.getElementById('displacement');
 const oilPriceInput = document.getElementById('oilPrice');
+const frontTireInput = document.getElementById('frontTire');
+const rearTireInput = document.getElementById('rearTire');
 displacementInput.addEventListener('input', () => {
   const cc = Number(displacementInput.value);
   if(cc >= 50 && cc <= 125){
-    oilPriceInput.value = 3000;
+    oilPriceInput.value = 3300;
+    frontTireInput.value = 8800;
+    rearTireInput.value = 11000;
   }
 });
 
@@ -426,6 +475,7 @@ btnRunning.addEventListener('click', () => {
   }
   partsOutFieldWrap.style.display = 'none';
   runningPhraseToggle.style.display = 'flex';
+  selfPickupFieldWrap.style.display = (runningPhrase === 'エンジン始動確認済み') ? 'block' : 'none';
 });
 
 btnDead.addEventListener('click', () => {
@@ -437,6 +487,7 @@ btnDead.addEventListener('click', () => {
   }
   partsOutFieldWrap.style.display = 'block';
   runningPhraseToggle.style.display = 'none';
+  selfPickupFieldWrap.style.display = 'none';
 });
 
 function val(id){
@@ -450,6 +501,17 @@ function numOrNull(id){
 
 function yen(n){
   return Number(n).toLocaleString('ja-JP');
+}
+
+function getJibaiseki(){
+  const raw = val('jibaisekiDate');
+  if(!raw) return null;
+  const d = new Date(raw + 'T00:00:00');
+  if(isNaN(d.getTime())) return null;
+  const reiwaYear = d.getFullYear() - 2018;
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  return { reiwaYear, month, day };
 }
 
 function buildMaintenanceLine(){
@@ -492,6 +554,8 @@ function buildBody(platform){
 
   lines.push(`キー　${keys}`);
   if(mileage) lines.push(`走行距離　${mileage}km（メーター読み）`);
+  const jibaiseki = getJibaiseki();
+  if(jibaiseki) lines.push(`自賠責保険令和${jibaiseki.reiwaYear}年${jibaiseki.month}月${jibaiseki.day}日まで`);
   lines.push('');
 
   if(statusDesc){
@@ -517,7 +581,8 @@ function buildBody(platform){
   lines.push(`${area}からの出品となります。`);
   lines.push('トラック等でのお引き取りでお願いいたします。');
 
-  if(isRunning){
+  const canSelfPickup = isRunning && (runningPhrase !== 'エンジン始動確認済み' || selfPickupAllowed);
+  if(canSelfPickup){
     if(platform === 'yahoo'){
       lines.push('自走でのお引き取りご希望の場合登録書類を発送いたしますので発送方法はレターパックライトをご選択下さい。');
     } else if(platform === 'jimoty' || platform === 'sns'){
@@ -579,16 +644,20 @@ function baseTitle(){
   const model = val('model');
   const modelCode = val('modelCode');
   const tail = val('titleTail');
+  const customTag = val('customTag');
+  const jibaiseki = getJibaiseki();
+  const jibaisekiTag = jibaiseki ? `自賠責${jibaiseki.reiwaYear}年${jibaiseki.month}月まで！` : '';
+  const tagsPrefix = `${jibaisekiTag}${customTag}`;
 
   let nameBlock = maker ? `${maker}　${model}` : model;
   if(modelCode) nameBlock += `　${modelCode}`;
 
   if(isRunning){
-    let t = `${runningPhrase}！${nameBlock}`;
+    let t = `${tagsPrefix}${runningPhrase}！${nameBlock}`;
     if(tail) t += ` ${tail}`;
     return t;
   } else {
-    let t = nameBlock;
+    let t = `${tagsPrefix}${nameBlock}`;
     if(tail) t += ` ${tail}`;
     t += ' ベース・部品取りに';
     return t;
@@ -601,7 +670,7 @@ function buildTitleFor(platform){
   const base = baseTitle();
 
   if(platform === 'tiktok'){
-    return base;
+    return `八王子市から！${base}`;
   }
   if(platform === 'instagram'){
     let t = base;
@@ -656,16 +725,23 @@ document.getElementById('generateBtn').addEventListener('click', () => {
         <span>${c.label}</span>
         <button class="copy-btn" data-idx="${idx}">コピー</button>
       </div>
-      <div class="output-body" id="body-${idx}"></div>
+      <textarea class="output-body" id="body-${idx}"></textarea>
     `;
     outputs.appendChild(card);
-    document.getElementById(`body-${idx}`).textContent = c.text;
+    const ta = document.getElementById(`body-${idx}`);
+    ta.value = c.text;
+    ta.addEventListener('input', () => {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    });
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
   });
 
   document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const idx = btn.getAttribute('data-idx');
-      const text = cards[idx].text;
+      const text = document.getElementById(`body-${idx}`).value;
       try{
         await navigator.clipboard.writeText(text);
       }catch(e){
